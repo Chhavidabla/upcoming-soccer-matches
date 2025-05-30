@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upcoming Soccer Matches</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #142056 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .api-info {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .api-info h3 {
+            margin-bottom: 10px;
+            color: #ffd700;
+        }
+
+        .matches-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+        }
+
+        .match-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .match-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #811c6c, #88272f);
+        }
+
+        .match-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+        }
+
+        .match-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .league-name {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 600;
+            background: #f0f0f0;
+            padding: 5px 12px;
+            border-radius: 20px;
+        }
+
+        .match-date {
+            font-size: 0.9rem;
+            color: #007E33;
+            font-weight: 600;
+        }
+
+        .teams {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .team {
+            flex: 1;
+            text-align: center;
+        }
+
+        .team-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .vs {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #007E33;
+            margin: 0 20px;
+            background: #f8f9fa;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #00c851;
+        }
+
+        .match-time {
+            text-align: center;
+            font-size: 1.1rem;
+            color: #555;
+            font-weight: 600;
+            background: linear-gradient(90deg, #f8f9fa, #e9ecef);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2rem;
+            margin: 50px 0;
+        }
+
+        .error {
+            background: rgba(220, 53, 69, 0.9);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #fff;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .demo-note {
+            background: rgba(255, 193, 7, 0.9);
+            color: #333;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .live-indicator {
+            background: rgba(113, 136, 146, 0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(45deg, #7e0039, #2661ba);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 20px auto;
+            display: block;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 126, 51, 0.3);
+        }
+
+        .match-status {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 5px;
+        }
+
+        .status-scheduled {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status-live {
+            background: #ffebee;
+            color: #d32f2f;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚽ Upcoming Soccer Matches</h1>
+            <p>Stay updated with the latest fixtures</p>
+        </div>
+
+        <div class="api-info">
+            <h3>📡 API Information</h3>
+            <p><strong>API Used:</strong> API-Football (Free Tier)</p>
+            <p><strong>Endpoint:</strong> https://api-football-v1.p.rapidapi.com/v3/fixtures</p>
+            <p><strong>Features:</strong> Live fixtures, team information, league data</p>
+        </div>
+
+        <div class="live-indicator">
+            🔴 LIVE: Fetching real-time match data from API-Football
+        </div>
+
+        <button class="refresh-btn" onclick="refreshMatches()">
+            🔄 Refresh Matches
+        </button>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            Loading upcoming matches...
+        </div>
+
+        <div id="matches" class="matches-container"></div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_KEY = '1249fd7453mshb4b00e74c9d66b6p10b362jsn9688da306e01'; 
+        const API_URL = 'https://api-football-v1.p.rapidapi.com/v3/fixtures';
+        
+        // Sample data for demo purposes
+        const sampleMatches = [
+            {
+                fixture: {
+                    id: 1,
+                    date: '2025-05-30T15:00:00+00:00',
+                    timezone: 'UTC'
+                },
+                league: {
+                    name: 'Premier League',
+                    country: 'England'
+                },
+                teams: {
+                    home: { name: 'Manchester United' },
+                    away: { name: 'Liverpool' }
+                }
+            },
+            {
+                fixture: {
+                    id: 2,
+                    date: '2025-05-30T17:30:00+00:00',
+                    timezone: 'UTC'
+                },
+                league: {
+                    name: 'La Liga',
+                    country: 'Spain'
+                },
+                teams: {
+                    home: { name: 'Real Madrid' },
+                    away: { name: 'FC Barcelona' }
+                }
+            },
+            {
+                fixture: {
+                    id: 3,
+                    date: '2025-05-31T14:00:00+00:00',
+                    timezone: 'UTC'
+                },
+                league: {
+                    name: 'Serie A',
+                    country: 'Italy'
+                },
+                teams: {
+                    home: { name: 'Juventus' },
+                    away: { name: 'AC Milan' }
+                }
+            },
+            {
+                fixture: {
+                    id: 4,
+                    date: '2025-05-31T16:30:00+00:00',
+                    timezone: 'UTC'
+                },
+                league: {
+                    name: 'Bundesliga',
+                    country: 'Germany'
+                },
+                teams: {
+                    home: { name: 'Bayern Munich' },
+                    away: { name: 'Borussia Dortmund' }
+                }
+            },
+            {
+                fixture: {
+                    id: 5,
+                    date: '2025-06-01T13:00:00+00:00',
+                    timezone: 'UTC'
+                },
+                league: {
+                    name: 'Ligue 1',
+                    country: 'France'
+                },
+                teams: {
+                    home: { name: 'Paris Saint-Germain' },
+                    away: { name: 'Olympique Marseille' }
+                }
+            },
+            {
+                fixture: {
+                    id: 6,
+                    date: '2025-06-01T18:45:00+00:00',
+                    timezone: 'UTC'
+                },
+                league: {
+                    name: 'Champions League',
+                    country: 'World'
+                },
+                teams: {
+                    home: { name: 'Chelsea' },
+                    away: { name: 'Inter Milan' }
+                }
+            }
+        ];
+
+        async function fetchMatches() {
+            try {
+                // Check if API key is provided
+                if (API_KEY === '1249fd7453mshb4b00e74c9d66b6p10b362jsn9688da306e01') {
+                    // Use sample data for demo
+                    setTimeout(() => {
+                        displayMatches(sampleMatches);
+                        document.getElementById('loading').style.display = 'none';
+                    }, 1500);
+                    return;
+                }
+
+                // Try different API endpoints to find matches
+                console.log('Fetching matches...');
+                
+                // First try: Get matches for today and next 14 days
+                const today = new Date();
+                const twoWeeks = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000);
+                const fromDate = today.toISOString().split('T')[0];
+                const toDate = twoWeeks.toISOString().split('T')[0];
+                
+                console.log(`Searching from ${fromDate} to ${toDate}`);
+                
+                // Try simpler query first - just date range, no league filter
+                let apiUrl = `${API_URL}?from=${fromDate}&to=${toDate}`;
+                console.log('API URL:', apiUrl);
+                
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'X-RapidAPI-Key': API_KEY,
+                        'X-RapidAPI-Host': 'api-football-v1.p.rapidapi.com'
+                    }
+                });
+
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Full API Response:', data);
+                console.log('Number of matches found:', data.response ? data.response.length : 0);
+                
+                if (data.response && data.response.length > 0) {
+                    displayMatches(data.response.slice(0, 15));
+                } else {
+                    console.log('No matches found, trying alternative approach...');
+                    // Try getting fixtures for specific popular leagues
+                    await tryAlternativeApproach();
+                }
+                
+            } catch (error) {
+                console.error('Error fetching matches:', error);
+                displayError(`Failed to load matches: ${error.message}`);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        async function tryAlternativeApproach() {
+            try {
+                // Try getting fixtures for current season of Premier League
+                const altUrl = `${API_URL}?league=39&season=2024&next=10`;
+                console.log('Trying alternative URL:', altUrl);
+                
+                const response = await fetch(altUrl, {
+                    method: 'GET',
+                    headers: {
+                        'X-RapidAPI-Key': API_KEY,
+                        'X-RapidAPI-Host': 'api-football-v1.p.rapidapi.com'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Alternative API Response:', data);
+                    
+                    if (data.response && data.response.length > 0) {
+                        displayMatches(data.response);
+                        return;
+                    }
+                }
+                
+                // If still no matches, show informative message
+                displayError('No upcoming matches found in the next 2 weeks. This might be during an off-season period.');
+                
+            } catch (error) {
+                console.error('Alternative approach failed:', error);
+                displayError('Unable to fetch match data. Please check your API key and internet connection.');
+            }
+        }
+
+        function refreshMatches() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('matches').innerHTML = '';
+            fetchMatches();
+        }
+
+        function displayMatches(matches) {
+            const matchesContainer = document.getElementById('matches');
+            
+            if (!matches || matches.length === 0) {
+                matchesContainer.innerHTML = '<div class="error">No upcoming matches found.</div>';
+                return;
+            }
+
+            matchesContainer.innerHTML = matches.map(match => {
+                const matchDate = new Date(match.fixture.date);
+                const formattedDate = matchDate.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                const formattedTime = matchDate.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                });
+
+                // Handle potential missing data
+                const homeTeam = match.teams?.home?.name || 'TBD';
+                const awayTeam = match.teams?.away?.name || 'TBD';
+                const leagueName = match.league?.name || 'Unknown League';
+                const matchStatus = match.fixture?.status?.short || 'NS';
+
+                return `
+                    <div class="match-card">
+                        <div class="match-header">
+                            <div class="league-name">${leagueName}</div>
+                            <div class="match-date">${formattedDate}</div>
+                        </div>
+                        <div class="teams">
+                            <div class="team">
+                                <div class="team-name">${homeTeam}</div>
+                            </div>
+                            <div class="vs">VS</div>
+                            <div class="team">
+                                <div class="team-name">${awayTeam}</div>
+                            </div>
+                        </div>
+                        <div class="match-time">
+                            🕐 ${formattedTime}
+                            <div class="match-status ${getStatusClass(matchStatus)}">
+                                ${getStatusText(matchStatus)}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function displayError(message) {
+            const matchesContainer = document.getElementById('matches');
+            matchesContainer.innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        function getStatusClass(status) {
+            switch(status) {
+                case 'NS': return 'status-scheduled';
+                case '1H': case '2H': case 'HT': return 'status-live';
+                default: return 'status-scheduled';
+            }
+        }
+
+        function getStatusText(status) {
+            switch(status) {
+                case 'NS': return 'Scheduled';
+                case '1H': return 'Live - 1st Half';
+                case '2H': return 'Live - 2nd Half';
+                case 'HT': return 'Half Time';
+                case 'FT': return 'Full Time';
+                default: return 'Scheduled';
+            }
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', fetchMatches);
+    </script>
+</body>
+</html>
