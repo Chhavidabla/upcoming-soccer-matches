@@ -1,16 +1,16 @@
 # upcoming-soccer-matches
 A simple web app that displays upcoming soccer matches using a free public API.
 
-Tech Stack
+Tech Stack-->
 HTML
 CSS
-JavaScript (Vanilla)
+JavaScript
 
-API Used
+API Used-->
 API-Football (RapidAPI)
 URL: https://www.api-football.com/
 
-Features
+Features-->
 Displays upcoming soccer matches
 Fetches data using Fetch API
 Responsive layout for desktop and mobile
